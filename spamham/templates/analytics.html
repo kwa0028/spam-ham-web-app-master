@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <style>
+        body.body {
+            background: #eef2f7 !important;
+            color: #17202a;
+        }
+
+        .panel {
+            background: #ffffff;
+            border: 1px solid #d9e2ec;
+            border-radius: 8px;
+            padding: 18px;
+            margin-bottom: 18px;
+        }
+
+        .metric {
+            font-size: 28px;
+            font-weight: 700;
+        }
+    </style>
+
+    <h1 class="my-4">Admin analytics</h1>
+
+    <div class="row">
+        <div class="col-md-2"><div class="panel"><div class="metric">{{ totals.total|default:0 }}</div><div>Total</div></div></div>
+        <div class="col-md-2"><div class="panel"><div class="metric">{{ totals.single|default:0 }}</div><div>Single</div></div></div>
+        <div class="col-md-2"><div class="panel"><div class="metric">{{ totals.batch|default:0 }}</div><div>Batch</div></div></div>
+        <div class="col-md-2"><div class="panel"><div class="metric">{{ totals.correct|default:0 }}</div><div>Correct</div></div></div>
+        <div class="col-md-2"><div class="panel"><div class="metric">{{ totals.wrong|default:0 }}</div><div>Wrong</div></div></div>
+        <div class="col-md-2"><div class="panel"><div class="metric">{{ totals.average_accuracy|floatformat:1|default:"0" }}%</div><div>Avg confidence</div></div></div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="panel">
+                <h2>Results</h2>
+                <table class="table table-sm">
+                    {% for row in by_result %}
+                        <tr><td>{{ row.result }}</td><td>{{ row.total }}</td></tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="panel">
+                <h2>Recent predictions</h2>
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped">
+                        <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Message</th>
+                            <th>Result</th>
+                            <th>Confidence</th>
+                            <th>Feedback</th>
+                            <th>Source</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for item in recent %}
+                            <tr>
+                                <td>{% if item.user %}{{ item.user.username }}{% else %}Anonymous{% endif %}</td>
+                                <td>{{ item.message|truncatechars:60 }}</td>
+                                <td>{{ item.result }}</td>
+                                <td>{{ item.accuracy }}%</td>
+                                <td>{% if item.feedback %}{{ item.get_feedback_display }}{% else %}Pending{% endif %}</td>
+                                <td>{{ item.get_source_display }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

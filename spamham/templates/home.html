@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <style>
+        body.body {
+            background: #eef2f7 !important;
+            color: #17202a;
+            font-family: Roboto, Arial, sans-serif;
+        }
+
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 22px 0;
+        }
+
+        .dashboard-title h1 {
+            font-size: 30px;
+            margin-bottom: 4px;
+        }
+
+        .dashboard-title p {
+            color: #5d6d7e;
+            margin: 0;
+        }
+
+        .panel {
+            background: #ffffff;
+            border: 1px solid #d9e2ec;
+            border-radius: 8px;
+            padding: 18px;
+            margin-bottom: 18px;
+            box-shadow: 0 8px 22px rgba(23, 32, 42, 0.06);
+        }
+
+        .panel h2 {
+            font-size: 20px;
+            margin-bottom: 14px;
+        }
+
+        .result-badge {
+            display: inline-block;
+            border-radius: 4px;
+            padding: 6px 10px;
+            background: #17202a;
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        .muted {
+            color: #66788a;
+        }
+    </style>
+
+    <div class="dashboard-header">
+        <div class="dashboard-title">
+            <h1>SpamHam Dashboard</h1>
+            <p>Classify messages, review confidence, and improve predictions with feedback.</p>
+        </div>
+        <div>
+            {% if request.user.is_authenticated %}
+                <span class="muted">Signed in as {{ request.user.username }}</span>
+            {% else %}
+                <a class="btn btn-outline-dark btn-sm" href="{% url 'login' %}">Login</a>
+                <a class="btn btn-danger btn-sm" href="{% url 'register' %}">Register</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-7">
+            <div class="panel">
+                <h2>Single message check</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    <textarea class="form-control" rows="6" name="message"
+                              placeholder="Paste an email or SMS message..." required>{{ message }}</textarea>
+                    <button type="submit" class="btn btn-danger btn-block mt-3">Check message</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="panel">
+                <h2>CSV batch upload</h2>
+                <p class="muted">Upload a CSV with a <code>message</code> column, or a single-column CSV of messages.</p>
+                <form method="post" action="{% url 'batch_upload' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="file" name="csv_file" class="form-control-file" accept=".csv" required>
+                    <button type="submit" class="btn btn-dark btn-block mt-3">Upload and classify</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {% if result %}
+        <div class="panel" id="result">
+            <h2>Latest result</h2>
+            <p class="muted">You entered: "{{ message }}"</p>
+            <p><span class="result-badge">{{ result }}</span> <strong>{{ accuracy }}%</strong> confidence</p>
+            <p>{{ explanation }}</p>
+
+            {% if prediction %}
+                <form method="post" action="{% url 'feedback' prediction.id %}" class="form-inline">
+                    {% csrf_token %}
+                    <span class="mr-2">Was this prediction right?</span>
+                    <button type="submit" name="feedback" value="correct" class="btn btn-success btn-sm mr-2">Correct</button>
+                    <button type="submit" name="feedback" value="wrong" class="btn btn-warning btn-sm">Wrong</button>
+                </form>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {% if batch_results %}
+        <div class="panel">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>Batch results</h2>
+                <a class="btn btn-outline-dark btn-sm" href="{% url 'batch_download' batch_id %}">Download CSV</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-striped">
+                    <thead>
+                    <tr>
+                        <th>Message</th>
+                        <th>Result</th>
+                        <th>Confidence</th>
+                        <th>Explanation</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in batch_results %}
+                        <tr>
+                            <td>{{ item.message|truncatechars:70 }}</td>
+                            <td>{{ item.result }}</td>
+                            <td>{{ item.accuracy }}%</td>
+                            <td>{{ item.explanation|truncatechars:100 }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="panel">
+        <h2>Prediction history</h2>
+        {% if history %}
+            <div class="table-responsive">
+                <table class="table table-sm table-striped">
+                    <thead>
+                    <tr>
+                        <th>Message</th>
+                        <th>Result</th>
+                        <th>Confidence</th>
+                        <th>Feedback</th>
+                        <th>Source</th>
+                        <th>Checked</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in history %}
+                        <tr>
+                            <td>{{ item.message|truncatechars:70 }}</td>
+                            <td>{{ item.result }}</td>
+                            <td>{{ item.accuracy }}%</td>
+                            <td>{% if item.feedback %}{{ item.get_feedback_display }}{% else %}Pending{% endif %}</td>
+                            <td>{{ item.get_source_display }}</td>
+                            <td>{{ item.created_at|date:"M d, Y H:i" }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="muted">No predictions yet.</p>
+        {% endif %}
+    </div>
+{% endblock %}

@@ -1,0 +1,12 @@
+textclassifier/settings/local.py
+textclassifier/settings/local2.py
+db.sqlite3
+.venv/
+.idea/
+server.log
+server.err.log
+*.py[cod]
+.DS_Store
+__pycache__/
+*.py[cod]
+*.class
