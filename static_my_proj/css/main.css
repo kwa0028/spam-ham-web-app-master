@@ -1,0 +1,187 @@
+/* ── CSS Variables ── */
+:root {
+    --bg-page:        #1a1a2e;
+    --bg-card:        #16213e;
+    --bg-card-2:      #0f3460;
+    --bg-input:       #1a1a2e;
+    --border-color:   #2a2a4a;
+    --text-primary:   #e0e0e0;
+    --text-secondary: #a0a0b0;
+    --text-muted:     #6c757d;
+    --accent-red:     #e53935;
+    --accent-green:   #43a047;
+    --navbar-bg:      #0d0d1a;
+    --btn-submit-bg:  #e53935;
+    --btn-submit-hover: #b71c1c;
+    --jumbotron-bg:   #16213e;
+    --link-color:     #64b5f6;
+    --toggle-icon:    "☀️";
+}
+
+[data-theme="light"] {
+    --bg-page:        #f0f2f5;
+    --bg-card:        #ffffff;
+    --bg-card-2:      #f8f9fa;
+    --bg-input:       #ffffff;
+    --border-color:   #dee2e6;
+    --text-primary:   #212529;
+    --text-secondary: #495057;
+    --text-muted:     #6c757d;
+    --navbar-bg:      #343a40;
+    --btn-submit-bg:  #dc3545;
+    --btn-submit-hover: #c82333;
+    --jumbotron-bg:   #ffffff;
+    --link-color:     #007bff;
+    --toggle-icon:    "🌙";
+}
+
+/* ── Base ── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--bg-page) !important;
+    background-image: none !important;
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+    min-height: 100vh;
+}
+
+/* ── Navbar ── */
+.navbar.bg-dark {
+    background-color: var(--navbar-bg) !important;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.navbar-brand, .nav-link {
+    color: var(--text-primary) !important;
+}
+
+/* ── Dark mode toggle button ── */
+#theme-toggle {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 4px 12px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+    margin-left: 12px;
+    white-space: nowrap;
+}
+
+#theme-toggle:hover {
+    background: var(--bg-card-2);
+    border-color: var(--link-color);
+}
+
+/* ── Jumbotron / Cards ── */
+.jumbotron {
+    background-color: var(--jumbotron-bg) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    transition: background-color 0.3s ease;
+}
+
+/* ── Page heading ── */
+h1[style*="color:white"] {
+    color: var(--text-primary) !important;
+}
+
+/* ── Textarea ── */
+textarea {
+    background-color: var(--bg-input) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 6px;
+    padding: 10px;
+    width: 100%;
+    min-height: 90px;
+    resize: vertical;
+    transition: border-color 0.2s ease, background-color 0.3s ease;
+}
+
+textarea:focus {
+    outline: none;
+    border-color: var(--link-color) !important;
+    box-shadow: 0 0 0 2px rgba(100, 181, 246, 0.2);
+}
+
+textarea::placeholder {
+    color: var(--text-muted);
+}
+
+/* ── Submit button ── */
+.btn-danger, button.btn-danger {
+    background-color: var(--btn-submit-bg) !important;
+    border-color: var(--btn-submit-bg) !important;
+    color: #fff !important;
+    transition: background-color 0.2s ease;
+}
+
+.btn-danger:hover {
+    background-color: var(--btn-submit-hover) !important;
+    border-color: var(--btn-submit-hover) !important;
+}
+
+/* ── Result text ── */
+.jumbotron p,
+.jumbotron div,
+.jumbotron strong {
+    color: var(--text-primary);
+}
+
+/* ── Result label (spam/ham badge) ── */
+strong[style*="font-size: larger"] {
+    color: var(--text-primary) !important;
+}
+
+/* ── Links ── */
+a { color: var(--link-color) !important; }
+a:hover { opacity: 0.85; }
+
+/* ── Footer / Credit section ── */
+.text-center.container[style*="whitesmoke"] {
+    color: var(--text-secondary) !important;
+}
+
+hr[style*="whitesmoke"] {
+    border-color: var(--border-color) !important;
+    background: var(--border-color) !important;
+}
+
+/* ── List group (social links) ── */
+.list-group-item {
+    background-color: var(--bg-card-2) !important;
+    border-color: var(--border-color) !important;
+    color: var(--link-color) !important;
+    transition: background-color 0.2s ease;
+}
+
+.list-group-item:hover {
+    background-color: var(--bg-card) !important;
+    filter: brightness(1.1);
+}
+
+/* ── Result "Result-" label ── */
+#scroll > p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+/* ── Token heatmap legend text ── */
+.heatmap-legend span {
+    color: var(--text-secondary) !important;
+}
+
+/* ── Confidence bar track ── */
+.confidence-track {
+    background: var(--border-color) !important;
+}

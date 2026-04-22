@@ -3,54 +3,76 @@
 {% block content %}
     <style>
         body.body {
-            background: #eef2f7 !important;
-            color: #17202a;
+            background: var(--bg-page) !important;
+            color: var(--text-primary);
             font-family: Roboto, Arial, sans-serif;
         }
-
         .dashboard-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             margin: 22px 0;
         }
-
         .dashboard-title h1 {
             font-size: 30px;
             margin-bottom: 4px;
+            color: var(--text-primary);
         }
-
         .dashboard-title p {
-            color: #5d6d7e;
+            color: var(--text-secondary);
             margin: 0;
         }
-
         .panel {
-            background: #ffffff;
-            border: 1px solid #d9e2ec;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 18px;
             margin-bottom: 18px;
-            box-shadow: 0 8px 22px rgba(23, 32, 42, 0.06);
+            box-shadow: 0 8px 22px rgba(0,0,0,0.15);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
-
         .panel h2 {
             font-size: 20px;
             margin-bottom: 14px;
+            color: var(--text-primary);
         }
-
+        .panel p, .panel td, .panel th, .panel span, .panel code {
+            color: var(--text-primary);
+        }
         .result-badge {
             display: inline-block;
             border-radius: 4px;
             padding: 6px 10px;
-            background: #17202a;
-            color: #ffffff;
+            background: var(--bg-card-2);
+            color: var(--text-primary);
             font-weight: 700;
+            border: 1px solid var(--border-color);
         }
-
-        .muted {
-            color: #66788a;
+        .muted { color: var(--text-secondary); }
+        .table { color: var(--text-primary); }
+        .table-striped tbody tr:nth-of-type(odd) { background-color: rgba(255,255,255,0.03); }
+        .table thead th { border-bottom-color: var(--border-color); color: var(--text-secondary); }
+        .table td, .table th { border-top-color: var(--border-color); }
+        .form-control, textarea.form-control {
+            background-color: var(--bg-input) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--border-color) !important;
         }
+        .form-control:focus, textarea.form-control:focus {
+            border-color: var(--link-color) !important;
+            box-shadow: 0 0 0 2px rgba(100,181,246,0.2) !important;
+        }
+        .form-control::placeholder, textarea.form-control::placeholder {
+            color: var(--text-muted);
+        }
+        .confidence-track {
+            background: var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
+            height: 28px;
+            margin-bottom: 16px;
+        }
+        .heatmap-legend { color: var(--text-secondary); }
     </style>
 
     <div class="dashboard-header">
@@ -62,7 +84,7 @@
             {% if request.user.is_authenticated %}
                 <span class="muted">Signed in as {{ request.user.username }}</span>
             {% else %}
-                <a class="btn btn-outline-dark btn-sm" href="{% url 'login' %}">Login</a>
+                <a class="btn btn-outline-secondary btn-sm" href="{% url 'login' %}">Login</a>
                 <a class="btn btn-danger btn-sm" href="{% url 'register' %}">Register</a>
             {% endif %}
         </div>
@@ -87,8 +109,12 @@
                 <p class="muted">Upload a CSV with a <code>message</code> column, or a single-column CSV of messages.</p>
                 <form method="post" action="{% url 'batch_upload' %}" enctype="multipart/form-data">
                     {% csrf_token %}
-                    <input type="file" name="csv_file" class="form-control-file" accept=".csv" required>
-                    <button type="submit" class="btn btn-dark btn-block mt-3">Upload and classify</button>
+                    <input type="file" name="csv_file" class="form-control-file" accept=".csv" required
+                           style="color: var(--text-primary);">
+                    <button type="submit" class="btn btn-dark btn-block mt-3"
+                            style="background: var(--bg-card-2); border-color: var(--border-color); color: var(--text-primary);">
+                        Upload and classify
+                    </button>
                 </form>
             </div>
         </div>
@@ -98,13 +124,80 @@
         <div class="panel" id="result">
             <h2>Latest result</h2>
             <p class="muted">You entered: "{{ message }}"</p>
+
             <p><span class="result-badge">{{ result }}</span> <strong>{{ accuracy }}%</strong> confidence</p>
-            <p>{{ explanation }}</p>
+
+            {# ── Confidence bar ── #}
+            {% if is_spam %}
+            <div class="confidence-track">
+                <div style="width:{{ accuracy }}%; background:linear-gradient(90deg,#e53935,#b71c1c);
+                            height:100%; display:flex; align-items:center; justify-content:flex-end;
+                            padding-right:8px; color:#fff; font-weight:bold; transition:width 0.8s ease;">
+                    {{ accuracy }}%
+                </div>
+            </div>
+            {% else %}
+            <div class="confidence-track">
+                <div style="width:{{ accuracy }}%; background:linear-gradient(90deg,#43a047,#1b5e20);
+                            height:100%; display:flex; align-items:center; justify-content:flex-end;
+                            padding-right:8px; color:#fff; font-weight:bold; transition:width 0.8s ease;">
+                    {{ accuracy }}%
+                </div>
+            </div>
+            {% endif %}
+
+            {# ── Token heatmap ── #}
+            {% if heatmap_tokens %}
+            <div style="margin-top: 14px;">
+                <strong>Token Heatmap:</strong>
+                <div style="margin-top: 8px; font-size: 1.05rem; line-height: 2.4; word-wrap: break-word;">
+                    {% for word, intensity in heatmap_tokens %}
+                        {% if is_spam %}
+                        <span title="{{ word }}: spam score {{ intensity }}"
+                              style="display:inline-block; padding:2px 7px; margin:2px; border-radius:4px;
+                                     background-color:rgba(220,50,50,{{ intensity }});
+                                     color:{% if intensity > 0.5 %}#fff{% else %}var(--text-primary){% endif %};
+                                     font-weight:{% if intensity > 0.6 %}bold{% else %}normal{% endif %};
+                                     border:1px solid rgba(220,50,50,{% if intensity > 0.1 %}0.4{% else %}0.1{% endif %});
+                                     transition:transform 0.15s; cursor:default;"
+                              onmouseover="this.style.transform='scale(1.12)'"
+                              onmouseout="this.style.transform='scale(1)'">{{ word }}</span>
+                        {% else %}
+                        <span title="{{ word }}: ham score {{ intensity }}"
+                              style="display:inline-block; padding:2px 7px; margin:2px; border-radius:4px;
+                                     background-color:rgba(40,167,69,{{ intensity }});
+                                     color:{% if intensity > 0.5 %}#fff{% else %}var(--text-primary){% endif %};
+                                     font-weight:{% if intensity > 0.6 %}bold{% else %}normal{% endif %};
+                                     border:1px solid rgba(40,167,69,{% if intensity > 0.1 %}0.4{% else %}0.1{% endif %});
+                                     transition:transform 0.15s; cursor:default;"
+                              onmouseover="this.style.transform='scale(1.12)'"
+                              onmouseout="this.style.transform='scale(1)'">{{ word }}</span>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <div class="heatmap-legend" style="margin-top:10px; display:flex; align-items:center; gap:8px; font-size:0.85rem;">
+                    <span>Less influential</span>
+                    {% if is_spam %}
+                    <div style="width:100px; height:12px; border-radius:4px;
+                                background:linear-gradient(to right,rgba(220,50,50,0.05),rgba(220,50,50,1));
+                                border:1px solid var(--border-color);"></div>
+                    {% else %}
+                    <div style="width:100px; height:12px; border-radius:4px;
+                                background:linear-gradient(to right,rgba(40,167,69,0.05),rgba(40,167,69,1));
+                                border:1px solid var(--border-color);"></div>
+                    {% endif %}
+                    <span>More influential</span>
+                    <span style="margin-left:8px; color:var(--text-muted);">(hover a word to see its score)</span>
+                </div>
+            </div>
+            {% endif %}
+
+            <p class="mt-3">{{ explanation }}</p>
 
             {% if prediction %}
-                <form method="post" action="{% url 'feedback' prediction.id %}" class="form-inline">
+                <form method="post" action="{% url 'feedback' prediction.id %}" class="form-inline mt-2">
                     {% csrf_token %}
-                    <span class="mr-2">Was this prediction right?</span>
+                    <span class="mr-2 muted">Was this prediction right?</span>
                     <button type="submit" name="feedback" value="correct" class="btn btn-success btn-sm mr-2">Correct</button>
                     <button type="submit" name="feedback" value="wrong" class="btn btn-warning btn-sm">Wrong</button>
                 </form>
@@ -116,7 +209,7 @@
         <div class="panel">
             <div class="d-flex justify-content-between align-items-center">
                 <h2>Batch results</h2>
-                <a class="btn btn-outline-dark btn-sm" href="{% url 'batch_download' batch_id %}">Download CSV</a>
+                <a class="btn btn-outline-secondary btn-sm" href="{% url 'batch_download' batch_id %}">Download CSV</a>
             </div>
             <div class="table-responsive">
                 <table class="table table-sm table-striped">
