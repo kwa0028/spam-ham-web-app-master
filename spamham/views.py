@@ -1,8 +1,10 @@
 import csv
 import io
 import math
+import string
 import uuid
 
+import numpy as np
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
@@ -15,6 +17,42 @@ from django.urls import reverse
 from manage import importPipelines
 from utils import text_process
 from .models import Prediction
+
+
+def get_token_heatmap(original_message, is_spam):
+    pipeline, _ = importPipelines()
+    vec = pipeline.named_steps.get('vec') or pipeline.named_steps.get('email_tfidf')
+    clf = pipeline.named_steps.get('clf')
+
+    if vec is None or clf is None or not hasattr(clf, 'feature_log_prob_'):
+        # Fallback: return words with no intensity if pipeline shape is unexpected
+        return [(word, 0.0) for word in original_message.split()]
+
+    spam_class_idx = list(clf.classes_).index('spam')
+    ham_class_idx = 1 - spam_class_idx
+    log_odds = clf.feature_log_prob_[spam_class_idx] - clf.feature_log_prob_[ham_class_idx]
+
+    feature_names = vec.get_feature_names_out() if hasattr(vec, 'get_feature_names_out') else vec.get_feature_names()
+    token_to_score = dict(zip(feature_names, log_odds))
+
+    words = original_message.split()
+    scored_words = []
+    for word in words:
+        clean = ''.join(ch for ch in word if ch not in string.punctuation).lower()
+        scored_words.append((word, float(token_to_score.get(clean, 0.0))))
+
+    scores = np.array([s for _, s in scored_words])
+
+    if is_spam:
+        pos = np.maximum(scores, 0)
+        mx = pos.max() if pos.max() > 0 else 1.0
+        intensities = pos / mx
+    else:
+        neg = np.maximum(-scores, 0)
+        mx = neg.max() if neg.max() > 0 else 1.0
+        intensities = neg / mx
+
+    return [(word, round(float(i), 3)) for (word, _), i in zip(scored_words, intensities)]
 
 
 def history_for(request):
@@ -46,6 +84,8 @@ def home(request):
 
     if request.method == 'POST':
         prediction = create_prediction(request, request.POST.get('message', ''))
+        is_spam = 'spam' in prediction.result
+        heatmap_tokens = get_token_heatmap(prediction.message, is_spam)
         context.update({
             'result': prediction.result,
             'message': prediction.message,
@@ -53,6 +93,8 @@ def home(request):
             'explanation': prediction.explanation,
             'prediction': prediction,
             'history': history_for(request),
+            'heatmap_tokens': heatmap_tokens,
+            'is_spam': is_spam,
         })
 
     return render(request, 'home.html', context)

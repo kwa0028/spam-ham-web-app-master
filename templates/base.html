@@ -1,27 +1,50 @@
 <!DOCTYPE html>
 {% load static %}
-<html lang="en" dir="ltr">
+<html lang="en" dir="ltr" data-theme="dark">
 <head>
     <meta charset="utf-8">
     <title>Spamham</title>
     {% include "base/css.html" %}
-    {#    <link rel="stylesheet" href="{% static "base/css.html" %}">#}
     {% block base_head %}{% endblock %}
     <script>
+        // Apply saved theme immediately to avoid flash
+        (function() {
+            var saved = localStorage.getItem('spamham-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+        })();
+
         function scrollDown() {
-            document.getElementById('scroll').scrollTop = document.getElementById('scroll').scrollHeight
-            console.log('functionis called!');
+            document.getElementById('scroll').scrollTop = document.getElementById('scroll').scrollHeight;
             window.scrollTo(0, document.body.scrollHeight || document.documentElement.scrollHeight);
         }
-    </script>
 
+        function toggleTheme() {
+            var html = document.documentElement;
+            var current = html.getAttribute('data-theme');
+            var next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('spamham-theme', next);
+            updateToggleLabel(next);
+        }
+
+        function updateToggleLabel(theme) {
+            var btn = document.getElementById('theme-toggle');
+            if (btn) {
+                btn.textContent = theme === 'dark' ? '☀️ Light mode' : '🌙 Dark mode';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var saved = localStorage.getItem('spamham-theme') || 'dark';
+            updateToggleLabel(saved);
+        });
+    </script>
 </head>
-<body background="https://www.ingadgetnepal.com/wp-content/uploads/2017/08/dark-gradient.jpg" class="body">
+<body class="body">
 {% include "base/navbar.html" with base_name='SpamHam' %}
 <div class="container">
     {% block content %}
     {% endblock %}
 </div>
 </body>
-
 </html>
