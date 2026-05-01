@@ -55,8 +55,13 @@ body {
     border-bottom: 1px solid var(--border-color);
 }
 
-.navbar-brand, .nav-link {
-    color: var(--text-primary) !important;
+.navbar-brand,
+.nav-link,
+.navbar-dark .navbar-nav .nav-link,
+.navbar-dark .navbar-brand,
+.navbar-text {
+    color: #ffffff !important;
+    opacity: 1 !important;
 }
 
 /* ── Dark mode toggle button ── */
